@@ -2,6 +2,7 @@ var express = require('express');
 var curl = require('curl');
 var app = express();
 var bParser = require('body-parser');
+var axios = require('axios');
 
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/index.html');
@@ -175,27 +176,27 @@ function makeCoordsQuery(location) {
     return query;
 }
 
-function setCoords(coords, query) {
-    curl.post(address, query, { "Content-Type": "application/graphql" }, function (err, response, body) {
-        if (err) {
-            console.log('Unhandled error.');
+function setCoords(coords, query, callback) {
+    axios({
+        method: 'post',
+        url: address,
+        data: query,
+        headers: {"Content-Type": "application/graphql"}
+    }).then(function (response) {
+        var stops = response.data.data.stops
+        if (stops.length != 0) {
+            var stop = stops[0];
+            coords.lat = stop.lat;
+            coords.lon = stop.lon;
+            callback({lat: stop.lat, lat: stop.lon, status: 200})
+        } else {
+            callback({message: 'No stops found.', status: 400})
         }
-        else {
-            console.log("from setCoords: " + response.statusCode);
-            if (response.statusCode != 200) {
-                console.log('Couldnt get data.');
-            }
-            else {
-                console.log(query)
-                var json = JSON.parse(body).data;
-                console.log(json.stops.length)
-                if (json.stops.length != 0) {
-                    var stop = json.stops[0];
-                    coords.lat = stop.lat;
-                    coords.lon = stop.lon;
-                    console.log(stop.lat, stop.lon);
-                }                
-            }
+    }).catch(function(error){
+        if(error.response.status == 500){
+            callback({error: error.response.statusText, status: error.response.status})
+        } else {
+            callback({error: 'Unhandled error.', status: 450})
         }
     });
 }
@@ -206,20 +207,34 @@ function printArray(data) {
     }
 }
 
+//queryN(1);
 function queryN(n) {
 
-    for (var i = 0; i < n; i++) {
-        curl(address, makeQuery, { "Content-Type": "application/graphql" }).then(function (data, b) { console.log(data) });
-    }
+    //for (var i = 0; i < n; i++) {
+    var query = `
+    {
+        "query": "{
+          stop(id: \"HSL:1040129\") {
+            name
+            lat
+            lon
+            wheelchairBoarding
+          }
+        }"
+      }`
+
+    axios.post(address, query, { "Content-Type": "application/graphql" }).then(function (body, b) { console.log('curl then success? ' + JSON.parse(body).data) }).catch(function (error) { console.log(error.response.statusText) });
+    //}
 
 }
 
 app.get('/data', function (req, res) {
-    res.set('Content-Type', 'application/json');
+    res.set('Content-Type', 'application/json')
     res.set('Access-Control-Allow-Origin', '*')
-    // queryN(1)
+   /* //queryN(1)
     queryHSL();
-    res.send({ bus: bus, walkDistance: walkDistance, ss: ss, es: es, duration: duration, startStop: startStop, endStop: endStop, wholeTime: wholeTime, leaving: leaving });
+    res.send({ bus: bus, walkDistance: walkDistance, ss: ss, es: es, duration: duration, startStop: startStop, endStop: endStop, wholeTime: wholeTime, leaving: leaving });*/
+    
 })
 
 app.post('/set', function (req, res) {
@@ -235,5 +250,6 @@ app.post('/set', function (req, res) {
     setCoords(end_coord, end_query);
 
     queryHSL();
+    //queryN(1);
     res.send({ bus: bus, walkDistance: walkDistance, ss: ss, es: es, duration: duration, startStop: startStop, endStop: endStop, wholeTime: wholeTime, leaving: leaving });
 });
