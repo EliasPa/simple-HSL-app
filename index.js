@@ -8,6 +8,8 @@ app.get('/', function (req, res) {
     res.sendFile(__dirname + '/index.html');
 });
 
+var port = process.env.PORT || 3000
+
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*")
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
@@ -19,7 +21,7 @@ app.use(bParser.urlencoded({
     extended: true
 }));
 
-app.listen(3001);
+app.listen(port);
 
 function queryHSL(data, callback) {
     var query = helper.makeQuery(data)
