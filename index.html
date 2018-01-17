@@ -30,7 +30,6 @@
             height: 0.1em;
             border-radius: 1em;
         }
-
     </style>
 </head>
 
@@ -68,7 +67,12 @@
         jQuery(function ($) {
             var $busTable = $('#buses');
             var $locForm = $('#locations');
-            var set = false;
+            var data = {
+                start: '',
+                end: '',
+                start_coord: '',
+                end_coord: ''
+            }
 
             $locForm.submit(function (e) {
                 e.preventDefault();
@@ -76,13 +80,17 @@
                 var start = $('#start').val();
                 var end = $('#end').val();
 
-                $.post(url, { "start": start, "end": end }, function (response) {
-                }, 'json').then(function (data) {
-                    $('#start').val('');
-                    $('#end').val('');
-                    $('#fromTo').html(start + "-" + end)
-                    set = true;
-                    showData(data);
+                $.post(url, { "start": start, "end": end }, 'json').then(function (response) {
+                    if (response.status == 200) {
+                        console.log('ok ' + response.message)
+                        $('#start').val('');
+                        $('#end').val('');
+                        $('#fromTo').html(start + "-" + end);
+                        data = response.data
+                        getData();
+                    }
+                }).catch(function (error) {
+                    console.log(error)
                 });
             })
 
@@ -124,18 +132,22 @@
             }
 
             function getData() {
-                if (set) {
-                    var url = 'http://localhost:3001/data'
-                    $.getJSON(url, function (data) {
-                        showData(data);
-                    }).then(function (data) {
-                        setTimeout(getData, 10000);
-                    }).catch(function (err) {
-                        console.log('Unhandled error.')
-                    });
-                }
+                var url = 'http://localhost:3001/data'
+                $.post(url, data
+                ).done(function (response) {
+                    console.log('jees')
+                    if (response.status == 200) {
+                        showData(response);
+                    } else {
+                        console.log(response.message)
+                    }
+                    setTimeout(getData, 1000);
+                }).fail(function (err) {
+                    console.log(err)
+                    console.log('Unhandled error.')
+                });
             };
-            
+
         });
 
     </script>

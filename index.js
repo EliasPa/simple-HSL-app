@@ -16,17 +16,19 @@ app.use(bParser.urlencoded({
 app.listen(3001);
 
 var address = 'http://api.digitransit.fi/routing/v1/routers/hsl/index/graphql'
-var start = ''
-var end = ''
 
-var start_coord = { lat: 0, lon: 0 };
-var end_coord = { lat: 0, lon: 0 };
+var counter = 0
 
+function makeQuery(data) {
+    console.log(counter)
+    counter += 1
+    console.log(data)
+    console.log(data.end)
+    console.log(data.start)
 
-var now = new Date();
-
-function makeQuery() {
-    now = new Date();
+    console.log(data.end_coord)
+    console.log(data.start_coord)
+    var now = new Date();
     var time = now.toString().split(' ')[4];
 
     var month = (now.getMonth() + 1).toString();
@@ -38,11 +40,11 @@ function makeQuery() {
     var year = now.getFullYear();
     var date = "" + year + "-" + month + "-" + d;
 
-    var from = start_coord;
-    var to = end_coord;
+    var from = data.start_coord;
+    var to = data.end_coord;
 
-    var fromPlace = start;
-    var toPlace = end;
+    var fromPlace = data.start;
+    var toPlace = data.end;
 
     var query = `{
         plan(
@@ -99,39 +101,30 @@ function makeQuery() {
     return query;
 }
 
-var walkDistance = 0;
-var duration = 0;
-var startTime = 0;
-var endTime = 0;
-var startStop = '';
-var endStop = '';
-var itinerary = []
-var walkDistance = 0;
-var wholeTime = 0;
-var leaving = 0;
-var ss = 0;
-var es = 0;
-var bus = '';
-
-var items = []
-
-function queryHSL() {
-    var query = makeQuery()
+function queryHSL(data, callback) {
+    var query = makeQuery(data)
     curl.post(address, query, { "Content-Type": "application/graphql" }, function (err, response, body) {
         if (err) {
-            console.log('Unhandled error.');
+            callback({ message: 'Internal error.', status: 500 })
         }
         else {
             console.log("from hsl query: " + response.statusCode);
-            if (response.statusCode != 200) console.log('Couldnt get data.');
+            if (response.statusCode != 200) callback({ message: 'Could not get data.', status: 450 })
             else {
                 var json = JSON.parse(body).data.plan;
                 var itineraries = json.itineraries;
-
+                var itinerary = []
                 for (i = 0; i < itineraries.length; i++) {
                     var it = itineraries[i];
                     itinerary.push({ duration: it.duration, walkDistance: it.walkDistance, legs: it.legs });
                 }
+
+                var walkDistance = 0;
+                var startTime = 0;
+                var endTime = 0;
+                var startStop = '';
+                var endStop = '';
+                var bus = '';
 
                 for (i = 0; i < itinerary.length; i++) {
                     var it = itinerary[i];
@@ -147,15 +140,28 @@ function queryHSL() {
                         }
                     }
                 }
+                var now = new Date();
+                var duration = Math.ceil((endTime - startTime) / 1000.0 / 60.0);
+                var wholeTime = Math.ceil((endTime - now.getTime()) / 1000.0 / 60);
+                var leaving = (startTime - now.getTime()) / 1000.0 / 60;
+                var startTime = new Date(startTime);
+                var endTime = new Date(endTime);
 
-                duration = Math.ceil((endTime - startTime) / 1000.0 / 60.0);
-                wholeTime = Math.ceil((endTime - now.getTime()) / 1000.0 / 60);
-                leaving = (startTime - now.getTime()) / 1000.0 / 60;
-                startTime = new Date(startTime);
-                endTime = new Date(endTime);
-
-                ss = startTime.toString().split(" ")[4];
-                es = endTime.toString().split(" ")[4];
+                var ss = startTime.toString().split(" ")[4];
+                var es = endTime.toString().split(" ")[4];
+                callback({
+                    bus: bus,
+                    walkDistance:
+                        walkDistance,
+                    ss: ss,
+                    es: es,
+                    startStop: startStop,
+                    endStop: endStop,
+                    duration: duration,
+                    wholeTime: wholeTime,
+                    leaving: leaving,
+                    status: 200
+                });
             }
         }
     });
@@ -181,22 +187,22 @@ function setCoords(coords, query, callback) {
         method: 'post',
         url: address,
         data: query,
-        headers: {"Content-Type": "application/graphql"}
+        headers: { "Content-Type": "application/graphql" }
     }).then(function (response) {
         var stops = response.data.data.stops
         if (stops.length != 0) {
             var stop = stops[0];
             coords.lat = stop.lat;
             coords.lon = stop.lon;
-            callback({lat: stop.lat, lat: stop.lon, status: 200})
+            callback({ lat: stop.lat, lat: stop.lon, status: 200 })
         } else {
-            callback({message: 'No stops found.', status: 400})
+            callback({ message: 'No stops found.', status: 400 })
         }
-    }).catch(function(error){
-        if(error.response.status == 500){
-            callback({error: error.response.statusText, status: error.response.status})
+    }).catch(function (error) {
+        if (error.response.status == 500) {
+            callback({ error: error.response.statusText, status: error.response.status })
         } else {
-            callback({error: 'Unhandled error.', status: 450})
+            callback({ error: 'Unhandled error.', status: 450 })
         }
     });
 }
@@ -209,47 +215,59 @@ function printArray(data) {
 
 //queryN(1);
 function queryN(n) {
-
     //for (var i = 0; i < n; i++) {
-    var query = `
-    {
-        "query": "{
-          stop(id: \"HSL:1040129\") {
-            name
-            lat
-            lon
-            wheelchairBoarding
-          }
-        }"
-      }`
-
     axios.post(address, query, { "Content-Type": "application/graphql" }).then(function (body, b) { console.log('curl then success? ' + JSON.parse(body).data) }).catch(function (error) { console.log(error.response.statusText) });
     //}
-
 }
 
-app.get('/data', function (req, res) {
+app.post('/data', function (req, res) {
     res.set('Content-Type', 'application/json')
     res.set('Access-Control-Allow-Origin', '*')
-   /* //queryN(1)
-    queryHSL();
-    res.send({ bus: bus, walkDistance: walkDistance, ss: ss, es: es, duration: duration, startStop: startStop, endStop: endStop, wholeTime: wholeTime, leaving: leaving });*/
-    
+    queryHSL(req.body, function (response) {
+        res.send(response);
+    })
 })
 
 app.post('/set', function (req, res) {
-    console.log(req.body);
     var data = req.body;
 
-    start = data.start;
-    end = data.end;
+    var start = data.start;
+    var end = data.end;
+
+    setAllCoords(start, end, function (response) {
+        res.send(response)
+    })
+
+});
+
+function setAllCoords(start, end, callback) {
+
+    var start_coord = { lat: 0, lon: 0 };
+    var end_coord = { lat: 0, lon: 0 };
 
     var start_query = makeCoordsQuery(start);
-    setCoords(start_coord, start_query);
     var end_query = makeCoordsQuery(end);
-    setCoords(end_coord, end_query);
-
-    queryHSL();
-    //queryN(1);
-    res.send({ bus: bus, walkDistance: walkDistance, ss: ss, es: es, duration: duration, startStop: startStop, endStop: endStop, wholeTime: wholeTime, leaving: leaving });
-});
+    setCoords(start_coord, start_query, function (response) {
+        if (response.status == 200) {
+            setCoords(end_coord, end_query, function (response) {
+                if (response.status == 200) {
+                    callback({
+                        message: 'Coordinates are set',
+                        data:
+                            {
+                                start: start,
+                                end: end,
+                                start_coord: start_coord,
+                                end_coord: end_coord
+                            },
+                        status: 200
+                    })
+                } else {
+                    callback(response)
+                }
+            })
+        } else {
+            callback(response)
+        }
+    })
+}
