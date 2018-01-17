@@ -72,9 +72,23 @@ function makeQuery(data) {
     return query;
 }
 
+
+function makeCoordsQuery(location) {
+    var query = `
+        {
+            stops(name: "`+ location + `"){
+                lat
+                lon
+            }
+        }
+    `
+    return query;
+}
+
 var address = 'http://api.digitransit.fi/routing/v1/routers/hsl/index/graphql'
 
 module.exports = {
     makeQuery,
-    address
+    address,
+    makeCoordsQuery
 }

@@ -86,17 +86,6 @@ function queryHSL(data, callback) {
     });
 }
 
-function makeCoordsQuery(location) {
-    var query = `
-        {
-            stops(name: "`+ location + `"){
-                lat
-                lon
-            }
-        }
-    `
-    return query;
-}
 
 function setCoords(coords, query, callback) {
     axios({
@@ -150,8 +139,8 @@ app.post('/set', function (req, res) {
 function setAllCoords(start, end, callback) {
     var start_coord = { lat: 0, lon: 0 };
     var end_coord = { lat: 0, lon: 0 };
-    var start_query = makeCoordsQuery(start);
-    var end_query = makeCoordsQuery(end);
+    var start_query = helper.makeCoordsQuery(start);
+    var end_query = helper.makeCoordsQuery(end);
     setCoords(start_coord, start_query, function (response) {
         if (response.status == 200) {
             setCoords(end_coord, end_query, function (response) {
