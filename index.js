@@ -8,6 +8,12 @@ app.get('/', function (req, res) {
     res.sendFile(__dirname + '/index.html');
 });
 
+app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*")
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
+    next()
+});
+
 app.use(bParser.json());
 app.use(bParser.urlencoded({
     extended: true
@@ -20,12 +26,9 @@ var address = 'http://api.digitransit.fi/routing/v1/routers/hsl/index/graphql'
 var counter = 0
 
 function makeQuery(data) {
-    console.log(counter)
-    counter += 1
     console.log(data)
     console.log(data.end)
     console.log(data.start)
-
     console.log(data.end_coord)
     console.log(data.start_coord)
     var now = new Date();
@@ -229,15 +232,13 @@ app.post('/data', function (req, res) {
 })
 
 app.post('/set', function (req, res) {
-    var data = req.body;
-
+    var data = req.body
     var start = data.start;
     var end = data.end;
-
+    var counter = 0
     setAllCoords(start, end, function (response) {
         res.send(response)
     })
-
 });
 
 function setAllCoords(start, end, callback) {
