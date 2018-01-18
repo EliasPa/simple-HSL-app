@@ -22,6 +22,7 @@ app.use(bParser.urlencoded({
 }));
 
 app.listen(port);
+console.log('Listening to port ' + port)
 
 function queryHSL(data, callback) {
     var query = helper.makeQuery(data)
