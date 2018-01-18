@@ -16,8 +16,8 @@ function makeQuery(data) {
 
     var fromPlace = data.start;
     var toPlace = data.end;
-    
-    console.log(date)
+
+    console.log(time)
 
     var query = `{
         plan(
