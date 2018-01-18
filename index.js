@@ -71,6 +71,9 @@ function queryHSL(data, callback) {
 
                 var ss = startTime.toString().split(" ")[4];
                 var es = endTime.toString().split(" ")[4];
+
+                console.log('sent time: ' + ss +' ' + es)
+
                 callback({
                     bus: bus,
                     walkDistance:
