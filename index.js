@@ -39,7 +39,6 @@ function queryHSL(data, callback) {
                 for (i = 0; i < itineraries.length; i++) {
                     var it = itineraries[i];
                     itinerary.push({ duration: it.duration, walkDistance: it.walkDistance, legs: it.legs });
-                    console.log( it.duration + ' ' + it.walkDistance + ' '+it.legs )
                 }
 
                 var walkDistance = 0;
@@ -48,18 +47,14 @@ function queryHSL(data, callback) {
                 var startStop = '';
                 var endStop = '';
                 var bus = '';
-                console.log(itinerary)
                 for (i = 0; i < itinerary.length; i++) {
                     var it = itinerary[i];
-                    console.log(it)
                     walkDistance = Math.ceil(it.walkDistance);
                     for (j = 0; j < it.legs.length; j++) {
                         var leg = it.legs[j];
                         if (leg.mode == 'BUS') {
                             startTime = leg.startTime;
-                            console.log(new Date(leg.startTime))
                             endTime = leg.endTime;
-                            console.log(new Date(leg.startTime))
                             startStop = leg.from.name
                             endStop = leg.to.name
                             bus = leg.route.shortName
@@ -75,8 +70,6 @@ function queryHSL(data, callback) {
 
                 var ss = startTime.toString().split(" ")[4];
                 var es = endTime.toString().split(" ")[4];
-
-                console.log('sent time: ' + ss +' ' + es)
 
                 callback({
                     bus: bus,

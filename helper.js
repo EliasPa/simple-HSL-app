@@ -1,10 +1,8 @@
 function makeQuery(data) {
     var now = new Date();
-    console.log(process.env.NODE_ENV)
     if(process.env.NODE_ENV) {
-        now = new Date(now.setHours(now.getHours() + 4))
+        now = new Date(now.setHours(now.getHours() + 4)) // just a quick hack to set the actual time.
     }
-    console.log('now: ' + now)
     var time = now.toString().split(' ')[4];
 
     var month = (now.getMonth() + 1).toString();
@@ -21,8 +19,6 @@ function makeQuery(data) {
 
     var fromPlace = data.start;
     var toPlace = data.end;
-
-    console.log(time)
 
     var query = `{
         plan(
