@@ -47,7 +47,7 @@ function queryHSL(data, callback) {
                 var startStop = '';
                 var endStop = '';
                 var bus = '';
-
+                console.log(itinerary)
                 for (i = 0; i < itinerary.length; i++) {
                     var it = itinerary[i];
                     walkDistance = Math.ceil(it.walkDistance);
