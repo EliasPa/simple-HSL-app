@@ -1,5 +1,6 @@
 function makeQuery(data) {
     var now = new Date();
+    console.log('now: ' + now)
     var time = now.toString().split(' ')[4];
 
     var month = (now.getMonth() + 1).toString();
@@ -70,7 +71,7 @@ function makeQuery(data) {
         }
         }
     }`
-
+    console.log(query)
     return query;
 }
 
