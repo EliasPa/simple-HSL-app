@@ -14,14 +14,14 @@ app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*")
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
     next()
-});
+})
 
-app.use(bParser.json());
+app.use(bParser.json())
 app.use(bParser.urlencoded({
     extended: true
 }));
 
-app.listen(port);
+app.listen(port)
 console.log('Listening to port ' + port)
 
 function queryHSL(data, callback) {
