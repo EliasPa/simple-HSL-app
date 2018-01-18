@@ -55,7 +55,9 @@ function queryHSL(data, callback) {
                         var leg = it.legs[j];
                         if (leg.mode == 'BUS') {
                             startTime = leg.startTime;
+                            console.log(leg.startTime)
                             endTime = leg.endTime;
+                            console.log(leg.startTime)
                             startStop = leg.from.name
                             endStop = leg.to.name
                             bus = leg.route.shortName
