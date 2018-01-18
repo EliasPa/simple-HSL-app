@@ -2,7 +2,7 @@ function makeQuery(data) {
     var now = new Date();
     console.log(process.env.NODE_ENV)
     if(process.env.NODE_ENV) {
-        now = now.setHours(now.getHours() + 2)
+        now = new Date(now.setHours(now.getHours() + 2))
     }
     console.log('now: ' + now)
     var time = now.toString().split(' ')[4];
